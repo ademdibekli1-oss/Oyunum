@@ -4,7 +4,7 @@ const crypto=require('crypto');
 const DB_URL=(process.env.FB_URL||'https://oyun-f483d-default-rtdb.europe-west1.firebasedatabase.app').replace(/\/$/,'');
 const ROOT=DB_URL+'/rrgame/botsrv',EL_ROOT=DB_URL+'/rrgame/elect',DIP_ROOT=DB_URL+'/rrgame/dip';
 const NOW=process.env.BS_NOW?+process.env.BS_NOW:Date.now();
-const REGS=[{"s":"A","d":6,"adj":[1,2,4,5]},{"s":"A","d":5,"adj":[0,3,17]},{"s":"A","d":3,"adj":[0,4,9]},{"s":"A","d":5,"adj":[1,13]},{"s":"A","d":4,"adj":[0,2,10]},{"s":"K","d":5,"adj":[0,6,7]},{"s":"K","d":3,"adj":[5,7,8,8]},{"s":"K","d":6,"adj":[5,6,9]},{"s":"K","d":2,"adj":[6,6]},{"s":"D","d":4,"adj":[2,7,10,11]},{"s":"D","d":6,"adj":[4,9,11,12]},{"s":"D","d":7,"adj":[9,10,15]},{"s":"D","d":3,"adj":[10]},{"s":"G","d":6,"adj":[3,14,15]},{"s":"G","d":5,"adj":[13,15,16]},{"s":"G","d":4,"adj":[11,13,14]},{"s":"G","d":3,"adj":[14]},{"s":"B","d":6,"adj":[1,18,19]},{"s":"B","d":7,"adj":[17,19]},{"s":"B","d":7,"adj":[17,18,20]},{"s":"B","d":4,"adj":[19]},{"s":"O","d":2,"adj":[]},{"s":"O","d":2,"adj":[]}];
+const REGS=[{"s":"A","d":6,"adj":[1,2,4,5,23,25]},{"s":"A","d":5,"adj":[0,3,17]},{"s":"A","d":3,"adj":[0,4,9,25,28]},{"s":"A","d":5,"adj":[1,13,24,23]},{"s":"A","d":4,"adj":[0,2,10,25]},{"s":"K","d":5,"adj":[0,6,7,26]},{"s":"K","d":3,"adj":[5,7,8,8,26,27]},{"s":"K","d":6,"adj":[5,6,9]},{"s":"K","d":2,"adj":[6,6,27]},{"s":"D","d":4,"adj":[2,7,10,11,28]},{"s":"D","d":6,"adj":[4,9,11,12,28,31]},{"s":"D","d":7,"adj":[9,10,15,29]},{"s":"D","d":3,"adj":[10,27,29,30]},{"s":"G","d":6,"adj":[3,14,15,32]},{"s":"G","d":5,"adj":[13,15,16,31,32]},{"s":"G","d":4,"adj":[11,13,14,31,33]},{"s":"G","d":3,"adj":[14]},{"s":"B","d":6,"adj":[1,18,19,34,35,36]},{"s":"B","d":7,"adj":[17,19]},{"s":"B","d":7,"adj":[17,18,20]},{"s":"B","d":4,"adj":[19]},{"s":"O","d":2,"adj":[]},{"s":"O","d":2,"adj":[]},{"s":"A","d":7,"adj":[24,0,3]},{"s":"A","d":6,"adj":[23,3]},{"s":"A","d":3,"adj":[4,2,0,28]},{"s":"K","d":4,"adj":[5,6]},{"s":"K","d":2,"adj":[6,8,12,30]},{"s":"D","d":5,"adj":[9,2,10,25]},{"s":"D","d":7,"adj":[11,12]},{"s":"D","d":3,"adj":[12,27]},{"s":"G","d":6,"adj":[15,10,14,33]},{"s":"G","d":3,"adj":[14,13,35]},{"s":"G","d":4,"adj":[15,31]},{"s":"B","d":6,"adj":[17,36,35]},{"s":"B","d":6,"adj":[32,17,34]},{"s":"B","d":7,"adj":[34,17]}];
 const MIN=60e3,HOUR=3600e3,DAY=86400e3,MAXAWAY=7*DAY;
 const YIELD={gold:0.2,oil:1,ore:1.2},PRICE0={gold:800,oil:28,ore:20},RS=['gold','oil','ore'],KI={gold:7,oil:8,ore:9};
 // bot dizisi: [i,r,s,e,d,w,m,g,o,k,t,a,c,l,v,j,x,xt,au]
@@ -42,7 +42,7 @@ async function fb(method,path,body,base){
   throw last;
 }
 const rnd=Math.random;
-function mkBot(i){let reg=rnd()<0.05?21+(rnd()<0.5?0:1):Math.floor(rnd()*21);
+function mkBot(i){let reg=rnd()<0.05?21+(rnd()<0.5?0:1):(rnd()<0.4?23+Math.floor(rnd()*14):Math.floor(rnd()*21));
   return {i:i,r:reg,s:30,e:30,d:30,w:0,m:15000+Math.floor(rnd()*30000),g:0,o:0,k:0,t:0,a:rnd()*10*MIN,c:rnd()*30*MIN,l:(2+rnd()*5)*HOUR,v:(6+rnd()*18)*HOUR,j:NOW,x:'Yeni katıldı',xt:NOW,au:0};}
 const lvOf=b=>1+Math.floor(b.w/40);
 const r1=x=>Math.round(x*10)/10;
