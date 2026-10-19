@@ -166,6 +166,31 @@ async function dipRun(bots,cfg){
   }
   return log;
 }
+
+/* ===== yapay zekâ oyuncular da üretir: askeri eşyaları oyuncu pazarında satışa koyar ===== */
+const MK_ROOT=DB_URL+'/rrgame';
+const ITEM_BASE={tank:[9000,30],fighter:[22000,14],ship:[38000,8],bomber:[48000,6],battleship:[90000,3],missile:[110000,3],moontank:[70000,4]};
+async function botMarket(bots,cfg){
+  if(!bots.length)return 'bot yok';
+  const mk=(await fb('GET','/market',undefined,MK_ROOT))||{},ids=Object.keys(mk);
+  const mine=ids.filter(k=>mk[k]&&mk[k].s==='bot_market');
+  let del=0;
+  for(const k of mine){ if(+mk[k].t<NOW-8*HOUR||rnd()<0.1){await fb('DELETE','/market/'+k,undefined,MK_ROOT);del++;} }
+  const left=mine.length-del,want=Math.min(12,2+Math.floor(bots.length/120));
+  const lvAvg=bots.reduce((a,b)=>a+lvOf(b),0)/bots.length;
+  const keys=Object.keys(ITEM_BASE);let add=0;
+  for(let n=left;n<want;n++){
+    const k=keys[Math.floor(rnd()*keys.length)],B=ITEM_BASE[k];
+    const q=Math.max(1,Math.round(B[1]*(0.5+rnd())*(1+lvAvg/12))),p=Math.round(B[0]*(0.95+rnd()*0.3));
+    const b=bots[Math.floor(rnd()*bots.length)],id=NOW+'_bm'+n+Math.floor(rnd()*1e4);
+    await fb('PUT','/market/'+id,{s:'bot_market',sn:botName(b.i)+' 🤖',r:k,q:q,p:p,t:NOW},MK_ROOT);add++;
+  }
+  // bot satıcıya yapılan ödeme kayıtlarını ve eski talepleri temizle
+  try{await fb('DELETE','/settle/bot_market',undefined,MK_ROOT);}catch(e){}
+  try{const cl=(await fb('GET','/claims',undefined,MK_ROOT))||{};
+    for(const k of Object.keys(cl)){if(!mk[k]&&+(cl[k]||{}).t<NOW-3*HOUR)await fb('DELETE','/claims/'+k,undefined,MK_ROOT);}}catch(e){}
+  return `pazar: +${add} ilan, -${del} eski (şu an ~${left+add})`;
+}
 async function main(){
   token=await getToken();
   const cfg=await fb('GET','/cfg')||{};
@@ -188,6 +213,7 @@ async function main(){
     if(k>=1){al+=k*per;const room=Math.max(0,Math.min(5000,+g.cap||0)-bots.length),add=Math.min(room,Math.max(0,(+g.n||0)*k));for(let q=0;q<add;q++)bots.push(mkBot(bots.length));}}
   else al=NOW;
   try{const lg=(await electRun(bots,cfg)).concat(await decRun(bots,cfg),await dipRun(bots,cfg));lg.forEach(x=>console.log('Seçim/diplomasi:',x));}catch(e){console.log('Seçim hatası:',e.message);}
+  try{console.log('Üretim/'+await botMarket(bots,cfg));}catch(e){console.log('Pazar hatası:',e.message);}
   acc.money=Math.round(acc.money);RS.forEach(k=>acc.b[k]=Math.round(acc.b[k]*100)/100);acc.t=NOW;
   await fb('PUT','/state',{v:1,t:NOW,n:bots.length,al:al,b:JSON.stringify(bots.map(toArr))});
   await fb('PUT','/acc',acc);
