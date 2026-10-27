@@ -409,8 +409,10 @@ async function lastN(path,n){
   try{const o=await fbq(path,'orderBy='+encodeURIComponent('"$key"')+'&limitToLast='+n);return o||{};}
   catch(e){const o=(await fb('GET','/'+path,undefined,GD_ROOT))||{};const ks=Object.keys(o).sort().slice(-n),r={};ks.forEach(k=>r[k]=o[k]);return r;}
 }
+let KILL_AI=false;
 async function guardRun(){
   const gc=(await fb('GET','/guard/cfg',undefined,GD_ROOT))||{};
+  if(KILL_AI)gc.llm=false; // acil durum: yapay zekâ durdurulduysa yalnızca anahtar kelime filtresi çalışır
   if(gc.on===false)return 'kapalı';
   const owner=await fb('GET','/cfg/owner',undefined,GD_ROOT);
   const cur=(await fb('GET','/guard/cur',undefined,GD_ROOT))||{};const old=await fb('GET','/guard/flags',undefined,GD_ROOT)||{};
@@ -484,6 +486,9 @@ async function main(){
   token=await getToken();
   const cfg=await fb('GET','/cfg')||{};
   if(!cfg.on){console.log('Sunucu modu kapalı; yapacak iş yok.');return;}
+  let kill={};try{kill=(await fb('GET','/cfg/kill',undefined,GD_ROOT))||{};}catch(e){}
+  if(kill.all){console.log('⛔ Acil durum: tüm otomasyon yönetici tarafından durduruldu.');return;}
+  KILL_AI=!!kill.ai;if(KILL_AI)console.log('⏸ Acil durum: yapay zekâ durduruldu (akıllı oyuncular kapalı, güvenlikte yalnızca anahtar kelime filtresi).');
   const st=await fb('GET','/state');
   if(!st||!st.b){console.log('Durum yok (yönetici sunucu modunu açmalı).');return;}
   try{SM=(await fb('GET','/smart'))||{p:{}};SM.p=SM.p||{};}catch(e){SM={p:{}};}
@@ -502,7 +507,7 @@ async function main(){
   if(g&&g.on){const per=Math.max(1,+g.h||24)*HOUR,k=Math.floor((NOW-al)/per);
     if(k>=1){al+=k*per;const room=Math.max(0,Math.min(5000,+g.cap||0)-bots.length),add=Math.min(room,Math.max(0,(+g.n||0)*k));for(let q=0;q<add;q++)bots.push(mkBot(bots.length));}}
   else al=NOW;
-  try{console.log('Akıllı oyuncular:',await smartRun(bots,cfg,acc));}catch(e){console.log('Akıllı oyuncu hatası:',e.message);}
+  try{console.log('Akıllı oyuncular:',KILL_AI?'durduruldu (acil durum)':await smartRun(bots,cfg,acc));}catch(e){console.log('Akıllı oyuncu hatası:',e.message);}
   try{console.log('Güvenlik:',await guardRun());}catch(e){console.log('Güvenlik hatası:',e.message);}
   try{const lg=(await electRun(bots,cfg)).concat(await decRun(bots,cfg),await dipRun(bots,cfg));lg.forEach(x=>console.log('Seçim/diplomasi:',x));}catch(e){console.log('Seçim hatası:',e.message);}
   try{console.log('Üretim/'+await botMarket(bots,cfg));}catch(e){console.log('Pazar hatası:',e.message);}
