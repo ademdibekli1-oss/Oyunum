@@ -1,1 +1,34 @@
+name: Yapay Zeka Sunucusu
 
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: botserver
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save web-push
+      - run: node botserver.js
+        env:
+          FB_SA: ${{ secrets.FB_SA }}
+          VAPID_PUBLIC: ${{ secrets.VAPID_PUBLIC }}
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
+          GEMINI_KEY: ${{ secrets.GEMINI_KEY || secrets.LLM_KEY }}
+          GROQ_KEY: ${{ secrets.GROQ_KEY }}
+          CEREBRAS_KEY: ${{ secrets.CEREBRAS_KEY }}
+          MISTRAL_KEY: ${{ secrets.MISTRAL_KEY }}
+          OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+          ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_KEY }}
+          GH_MODELS_KEY: ${{ secrets.GH_MODELS_KEY }} 
